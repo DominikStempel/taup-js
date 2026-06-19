@@ -1,0 +1,38 @@
+{
+  "name": "taup-js",
+  "version": "1.0.0",
+  "description": "Seismic travel time calculator (TauP method) for JavaScript/TypeScript",
+  "author": "Dominik Stempel",
+  "license": "AGPL-3.0-only",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DominikStempel/taup-js.git"
+  },
+  "homepage": "https://github.com/DominikStempel/taup-js#readme",
+  "bugs": {
+    "url": "https://github.com/DominikStempel/taup-js/issues"
+  },
+  "keywords": ["seismology", "travel-time", "taup", "seismic", "earthquake"],
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc",
+    "test": "jest",
+    "prepublishOnly": "npm run build"
+  },
+  "devDependencies": {
+    "@types/jest": "^30.0.0",
+    "@types/node": "^25.9.3",
+    "jest": "^30.4.2",
+    "ts-jest": "^29.4.11",
+    "typescript": "^6.0.3"
+  },
+  "jest": {
+    "preset": "ts-jest",
+    "testEnvironment": "node",
+    "transform": {
+      "^.+\\.tsx?$": ["ts-jest", { "tsconfig": "tsconfig.test.json" }]
+    }
+  }
+}
