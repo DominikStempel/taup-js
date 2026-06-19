@@ -23,7 +23,7 @@ export interface ParsedPhase {
  * P, S, PP, SS, PcP, ScS, PKP, PKiKP, PKIKP, pP, sP, pS, sS,
  * Pdiff, Sdiff, SKS, SKKS, ScP, PCS
  */
-export function parsePhase(phaseName: string): ParsedPhase | null {
+export const parsePhase = (phaseName: string): ParsedPhase | null => {
   const name = phaseName.trim();
 
   // Depth phases (lowercase prefix)
@@ -194,6 +194,6 @@ export function parsePhase(phaseName: string): ParsedPhase | null {
   return phaseMap[name] ?? null;
 }
 
-export function supportedPhases(): string[] {
+export const supportedPhases = (): string[] => {
   return ["P", "S", "PP", "SS", "PcP", "ScS", "ScP", "PKP", "PKiKP", "PKIKP", "SKS", "SKKS", "pP", "sS", "Pdiff", "Sdiff"];
 }

@@ -17,22 +17,22 @@
 
 export const EARTH_RADIUS = 6371.0;
 
-export function depthToRadius(depth: number, earthRadius: number = EARTH_RADIUS): number {
+export const depthToRadius = (depth: number, earthRadius: number = EARTH_RADIUS): number => {
   return earthRadius - depth;
 }
 
-export function flattenVelocity(v: number, depth: number, earthRadius: number = EARTH_RADIUS): number {
+export const flattenVelocity = (v: number, depth: number, earthRadius: number = EARTH_RADIUS): number => {
   const r = depthToRadius(depth, earthRadius);
   return v * (earthRadius / r);
 }
 
-export function flattenDepth(depth: number, earthRadius: number = EARTH_RADIUS): number {
+export const flattenDepth = (depth: number, earthRadius: number = EARTH_RADIUS): number => {
   const r = depthToRadius(depth, earthRadius);
   return earthRadius * Math.log(earthRadius / r);
 }
 
 /** Vertical flat-Earth slowness. Returns 0 when p >= u (turning ray). */
-export function eta(u: number, p: number): number {
+export const eta = (u: number, p: number): number => {
   const v = u * u - p * p;
   return v > 0 ? Math.sqrt(v) : 0;
 }
@@ -50,14 +50,14 @@ export function eta(u: number, p: number): number {
  *
  * Both vanish at u = p, so the singular point is handled naturally.
  */
-export function integrateLayer(
+export const integrateLayer = (
   p: number,
   topDepth: number,
   botDepth: number,
   topV: number,
   botV: number,
   earthRadius: number = EARTH_RADIUS
-): { dT: number; dX: number } {
+): { dT: number; dX: number } => {
   if (botDepth - topDepth < 1e-9) return { dT: 0, dX: 0 };
 
   const R = earthRadius;

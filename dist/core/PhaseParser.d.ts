@@ -20,6 +20,6 @@ export interface ParsedPhase {
  * P, S, PP, SS, PcP, ScS, PKP, PKiKP, PKIKP, pP, sP, pS, sS,
  * Pdiff, Sdiff, SKS, SKKS, ScP, PCS
  */
-export declare function parsePhase(phaseName: string): ParsedPhase | null;
-export declare function supportedPhases(): string[];
+export declare const parsePhase: (phaseName: string) => ParsedPhase | null;
+export declare const supportedPhases: () => string[];
 //# sourceMappingURL=PhaseParser.d.ts.map

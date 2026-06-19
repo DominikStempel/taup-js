@@ -1,17 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.raySegment = raySegment;
-exports.findTurningDepth = findTurningDepth;
-exports.maxRayParam = maxRayParam;
-exports.computeDirectRay = computeDirectRay;
-exports.computeReflectedRay = computeReflectedRay;
-exports.computeSurfaceBounceRay = computeSurfaceBounceRay;
-exports.computeCoreRefractedRay = computeCoreRefractedRay;
-exports.computePKiKP = computePKiKP;
-exports.computeSKS = computeSKS;
-exports.computeSKKS = computeSKKS;
-exports.computeDepthPhase = computeDepthPhase;
-exports.computeDiffractedRay = computeDiffractedRay;
+exports.computeDiffractedRay = exports.computeDepthPhase = exports.computeSKKS = exports.computeSKS = exports.computePKiKP = exports.computeCoreRefractedRay = exports.computeSurfaceBounceRay = exports.computeReflectedRay = exports.computeDirectRay = exports.maxRayParam = exports.findTurningDepth = exports.raySegment = void 0;
 const integration_1 = require("./integration");
 /**
  * Compute total travel time and epicentral distance (radians) for a ray
@@ -19,7 +8,7 @@ const integration_1 = require("./integration");
  * The ray goes from d1 toward higher depth (downward) until turning,
  * but this function simply integrates the given depth interval.
  */
-function raySegment(model, p, fromDepth, toDepth, isS) {
+const raySegment = (model, p, fromDepth, toDepth, isS) => {
     let T = 0;
     let X = 0;
     const d1 = Math.min(fromDepth, toDepth);
@@ -40,13 +29,14 @@ function raySegment(model, p, fromDepth, toDepth, isS) {
         X += dX;
     }
     return { T, X };
-}
+};
+exports.raySegment = raySegment;
 /**
  * Find turning depth for ray parameter p between minDepth and maxDepth.
  * The turning depth is where 1/v_flat(z) = p (flat-Earth transform).
  * v_flat(d) = v(d) * R / r(d)
  */
-function findTurningDepth(model, p, maxDepth, isS, minDepth = 0) {
+const findTurningDepth = (model, p, maxDepth, isS, minDepth = 0) => {
     const R = model.earthRadius;
     for (const layer of model.layers) {
         if (layer.botDepth <= minDepth + 1e-9 || layer.topDepth >= maxDepth - 1e-9)
@@ -71,33 +61,35 @@ function findTurningDepth(model, p, maxDepth, isS, minDepth = 0) {
         }
     }
     return null;
-}
+};
+exports.findTurningDepth = findTurningDepth;
 /**
  * The ray parameter corresponding to a ray that turns exactly at `depth`.
  * p = r / (v_flat * R) = 1 / v_flat(depth)
  */
-function maxRayParam(model, depth, isS) {
+const maxRayParam = (model, depth, isS) => {
     const R = model.earthRadius;
     const r = (0, integration_1.depthToRadius)(depth, R);
     const v = model.velocityAt(depth, isS);
     if (v <= 0)
         return 0;
     return r / (v * R);
-}
+};
+exports.maxRayParam = maxRayParam;
 /**
  * Compute epicentral distance (radians) for a ray with parameter p that:
  *  - starts downward from sourceDepth
  *  - turns somewhere in [sourceDepth, maxSearchDepth]
  *  - comes back up to surface (depth = 0)
  */
-function directRayDistance(model, p, sourceDepth, maxSearchDepth, isS) {
-    const turnDepth = findTurningDepth(model, p, maxSearchDepth, isS, sourceDepth);
+const directRayDistance = (model, p, sourceDepth, maxSearchDepth, isS) => {
+    const turnDepth = (0, exports.findTurningDepth)(model, p, maxSearchDepth, isS, sourceDepth);
     if (turnDepth === null)
         return null;
-    const { X: Xdown } = raySegment(model, p, sourceDepth, turnDepth, isS);
-    const { X: Xup } = raySegment(model, p, 0, turnDepth, isS);
+    const { X: Xdown } = (0, exports.raySegment)(model, p, sourceDepth, turnDepth, isS);
+    const { X: Xup } = (0, exports.raySegment)(model, p, 0, turnDepth, isS);
     return Xdown + Xup;
-}
+};
 /**
  * Find the ray parameter p in [pMin, pMax] that gives targetX radians.
  *
@@ -109,7 +101,7 @@ function directRayDistance(model, p, sourceDepth, maxSearchDepth, isS) {
  * on the first branch) — i.e., the earliest crossing when iterating from the
  * smallest-p end.
  */
-function bisectRayParam(computeX, pMin, pMax, targetX) {
+const bisectRayParam = (computeX, pMin, pMax, targetX) => {
     // --- Phase 1: grid search ---
     const N = 300;
     const valid = [];
@@ -171,31 +163,31 @@ function bisectRayParam(computeX, pMin, pMax, targetX) {
         }
     }
     return (loP + hiP) / 2;
-}
-function toAngle(p, depth, model, isS) {
+};
+const toAngle = (p, depth, model, isS) => {
     const R = model.earthRadius;
     const r = (0, integration_1.depthToRadius)(depth, R);
     const v = model.velocityAt(depth, isS);
     const vf = v * (R / r);
     const sinA = Math.min(1, p * vf);
     return Math.asin(sinA) * (180 / Math.PI);
-}
+};
 /** Direct P or S wave turning in the mantle (or specified depth range). */
-function computeDirectRay(model, sourceDepth, distanceDeg, isS, maxSearchDepth) {
+const computeDirectRay = (model, sourceDepth, distanceDeg, isS, maxSearchDepth) => {
     const targetX = (distanceDeg * Math.PI) / 180;
     // p range: rays that turn from just above maxSearchDepth up to just below source
-    const pMin = maxRayParam(model, maxSearchDepth, isS) * 1.0001;
-    const pMax = maxRayParam(model, sourceDepth, isS) * 0.9999;
+    const pMin = (0, exports.maxRayParam)(model, maxSearchDepth, isS) * 1.0001;
+    const pMax = (0, exports.maxRayParam)(model, sourceDepth, isS) * 0.9999;
     if (pMin >= pMax)
         return null;
     const p = bisectRayParam(pp => directRayDistance(model, pp, sourceDepth, maxSearchDepth, isS), pMin, pMax, targetX);
     if (p === null)
         return null;
-    const turnDepth = findTurningDepth(model, p, maxSearchDepth, isS, sourceDepth);
+    const turnDepth = (0, exports.findTurningDepth)(model, p, maxSearchDepth, isS, sourceDepth);
     if (turnDepth === null)
         return null;
-    const { T: Tdown, X: Xdown } = raySegment(model, p, sourceDepth, turnDepth, isS);
-    const { T: Tup, X: Xup } = raySegment(model, p, 0, turnDepth, isS);
+    const { T: Tdown, X: Xdown } = (0, exports.raySegment)(model, p, sourceDepth, turnDepth, isS);
+    const { T: Tup, X: Xup } = (0, exports.raySegment)(model, p, 0, turnDepth, isS);
     const T = Tdown + Tup;
     const X = Xdown + Xup;
     const takeoffAngle = toAngle(p, sourceDepth, model, isS);
@@ -212,9 +204,10 @@ function computeDirectRay(model, sourceDepth, distanceDeg, isS, maxSearchDepth) 
             { depth: 0, distanceDeg: (X * 180) / Math.PI, time: T },
         ]
     };
-}
+};
+exports.computeDirectRay = computeDirectRay;
 /** PcP, ScS — wave reflected off a depth boundary without penetrating it. */
-function computeReflectedRay(model, sourceDepth, distanceDeg, isS, reflectorDepth) {
+const computeReflectedRay = (model, sourceDepth, distanceDeg, isS, reflectorDepth) => {
     const targetX = (distanceDeg * Math.PI) / 180;
     const R = model.earthRadius;
     const computeX = (p) => {
@@ -225,18 +218,18 @@ function computeReflectedRay(model, sourceDepth, distanceDeg, isS, reflectorDept
         const vf_ref = v_ref * (R / r_ref);
         if (p >= 1 / vf_ref)
             return null;
-        const { X: X1 } = raySegment(model, p, sourceDepth, reflectorDepth, isS);
-        const { X: X2 } = raySegment(model, p, 0, reflectorDepth, isS);
+        const { X: X1 } = (0, exports.raySegment)(model, p, sourceDepth, reflectorDepth, isS);
+        const { X: X2 } = (0, exports.raySegment)(model, p, 0, reflectorDepth, isS);
         return X1 + X2;
     };
     // Rays that arrive at reflector: p < u_ref, but must also be achievable from source
-    const pMax = maxRayParam(model, sourceDepth, isS) * 0.9999;
+    const pMax = (0, exports.maxRayParam)(model, sourceDepth, isS) * 0.9999;
     const pMin = 1e-6;
     const p = bisectRayParam(computeX, pMin, pMax, targetX);
     if (p === null)
         return null;
-    const { T: T1, X: X1 } = raySegment(model, p, sourceDepth, reflectorDepth, isS);
-    const { T: T2, X: X2 } = raySegment(model, p, 0, reflectorDepth, isS);
+    const { T: T1, X: X1 } = (0, exports.raySegment)(model, p, sourceDepth, reflectorDepth, isS);
+    const { T: T2, X: X2 } = (0, exports.raySegment)(model, p, 0, reflectorDepth, isS);
     const T = T1 + T2;
     const X = X1 + X2;
     return {
@@ -251,43 +244,44 @@ function computeReflectedRay(model, sourceDepth, distanceDeg, isS, reflectorDept
             { depth: 0, distanceDeg: (X * 180) / Math.PI, time: T },
         ]
     };
-}
+};
+exports.computeReflectedRay = computeReflectedRay;
 /**
  * PP or SS — one surface bounce. Ray goes source→turn1→surface→turn2→receiver.
  * Both legs have the same ray parameter.
  */
-function computeSurfaceBounceRay(model, sourceDepth, distanceDeg, isS, maxSearchDepth) {
+const computeSurfaceBounceRay = (model, sourceDepth, distanceDeg, isS, maxSearchDepth) => {
     const targetX = (distanceDeg * Math.PI) / 180;
     const computeX = (p) => {
         // First half-leg: source → turn → surface
-        const t1 = findTurningDepth(model, p, maxSearchDepth, isS, sourceDepth);
+        const t1 = (0, exports.findTurningDepth)(model, p, maxSearchDepth, isS, sourceDepth);
         if (t1 === null)
             return null;
-        const { X: Xd1 } = raySegment(model, p, sourceDepth, t1, isS);
-        const { X: Xu1 } = raySegment(model, p, 0, t1, isS);
+        const { X: Xd1 } = (0, exports.raySegment)(model, p, sourceDepth, t1, isS);
+        const { X: Xu1 } = (0, exports.raySegment)(model, p, 0, t1, isS);
         // Second half-leg: surface → turn → receiver (same as surface source)
-        const t2 = findTurningDepth(model, p, maxSearchDepth, isS, 0);
+        const t2 = (0, exports.findTurningDepth)(model, p, maxSearchDepth, isS, 0);
         if (t2 === null)
             return null;
-        const { X: Xu2 } = raySegment(model, p, 0, t2, isS);
+        const { X: Xu2 } = (0, exports.raySegment)(model, p, 0, t2, isS);
         return Xd1 + Xu1 + 2 * Xu2;
     };
-    const pMin = maxRayParam(model, maxSearchDepth, isS) * 1.0001;
-    const pMax = maxRayParam(model, sourceDepth, isS) * 0.9999;
+    const pMin = (0, exports.maxRayParam)(model, maxSearchDepth, isS) * 1.0001;
+    const pMax = (0, exports.maxRayParam)(model, sourceDepth, isS) * 0.9999;
     if (pMin >= pMax)
         return null;
     const p = bisectRayParam(computeX, pMin, pMax, targetX);
     if (p === null)
         return null;
-    const t1 = findTurningDepth(model, p, maxSearchDepth, isS, sourceDepth);
+    const t1 = (0, exports.findTurningDepth)(model, p, maxSearchDepth, isS, sourceDepth);
     if (t1 === null)
         return null;
-    const { T: Td1, X: Xd1 } = raySegment(model, p, sourceDepth, t1, isS);
-    const { T: Tu1, X: Xu1 } = raySegment(model, p, 0, t1, isS);
-    const t2 = findTurningDepth(model, p, maxSearchDepth, isS, 0);
+    const { T: Td1, X: Xd1 } = (0, exports.raySegment)(model, p, sourceDepth, t1, isS);
+    const { T: Tu1, X: Xu1 } = (0, exports.raySegment)(model, p, 0, t1, isS);
+    const t2 = (0, exports.findTurningDepth)(model, p, maxSearchDepth, isS, 0);
     if (t2 === null)
         return null;
-    const { T: Tu2, X: Xu2 } = raySegment(model, p, 0, t2, isS);
+    const { T: Tu2, X: Xu2 } = (0, exports.raySegment)(model, p, 0, t2, isS);
     const T = Td1 + Tu1 + 2 * Tu2;
     const X = Xd1 + Xu1 + 2 * Xu2;
     return {
@@ -303,46 +297,47 @@ function computeSurfaceBounceRay(model, sourceDepth, distanceDeg, isS, maxSearch
             { depth: 0, distanceDeg: (X * 180) / Math.PI, time: T },
         ]
     };
-}
+};
+exports.computeSurfaceBounceRay = computeSurfaceBounceRay;
 /**
  * PKP / PKIKP — refracted through the outer core (and optionally inner core).
  * Mantle legs use P velocity; core leg uses P velocity in fluid outer core.
  */
-function computeCoreRefractedRay(model, sourceDepth, distanceDeg, topWaveIsS, cmbDepth, icbDepth, passesInnerCore) {
+const computeCoreRefractedRay = (model, sourceDepth, distanceDeg, topWaveIsS, cmbDepth, icbDepth, passesInnerCore) => {
     const targetX = (distanceDeg * Math.PI) / 180;
     const coreMaxDepth = passesInnerCore ? model.maxDepth : icbDepth;
     const computeX = (p) => {
         // Check ray reaches CMB
-        const pCMB = maxRayParam(model, cmbDepth, topWaveIsS);
+        const pCMB = (0, exports.maxRayParam)(model, cmbDepth, topWaveIsS);
         if (p >= pCMB)
             return null;
         // Mantle legs (source to CMB, CMB to surface)
-        const { X: Xm1 } = raySegment(model, p, sourceDepth, cmbDepth, topWaveIsS);
-        const { X: Xm2 } = raySegment(model, p, 0, cmbDepth, topWaveIsS);
+        const { X: Xm1 } = (0, exports.raySegment)(model, p, sourceDepth, cmbDepth, topWaveIsS);
+        const { X: Xm2 } = (0, exports.raySegment)(model, p, 0, cmbDepth, topWaveIsS);
         // Core leg
-        const turnCore = findTurningDepth(model, p, coreMaxDepth, false, cmbDepth);
+        const turnCore = (0, exports.findTurningDepth)(model, p, coreMaxDepth, false, cmbDepth);
         if (turnCore === null)
             return null;
-        const { X: Xc } = raySegment(model, p, cmbDepth, turnCore, false);
+        const { X: Xc } = (0, exports.raySegment)(model, p, cmbDepth, turnCore, false);
         return Xm1 + 2 * Xc + Xm2;
     };
     // For core phases: small p → deep turning → small X (roughly antipodal)
     //                  large p → shallow core turning → large X
     // pMax: ray parameter that just barely enters the core
-    const pMax = maxRayParam(model, cmbDepth, topWaveIsS) * 0.9999;
+    const pMax = (0, exports.maxRayParam)(model, cmbDepth, topWaveIsS) * 0.9999;
     // pMin: ray that turns at the bottom of the search zone
-    const pMin = maxRayParam(model, coreMaxDepth, false) * 1.0001;
+    const pMin = (0, exports.maxRayParam)(model, coreMaxDepth, false) * 1.0001;
     if (pMin >= pMax)
         return null;
     const p = bisectRayParam(computeX, pMin, pMax, targetX);
     if (p === null)
         return null;
-    const { T: Tm1, X: Xm1 } = raySegment(model, p, sourceDepth, cmbDepth, topWaveIsS);
-    const { T: Tm2, X: Xm2 } = raySegment(model, p, 0, cmbDepth, topWaveIsS);
-    const turnCore = findTurningDepth(model, p, coreMaxDepth, false, cmbDepth);
+    const { T: Tm1, X: Xm1 } = (0, exports.raySegment)(model, p, sourceDepth, cmbDepth, topWaveIsS);
+    const { T: Tm2, X: Xm2 } = (0, exports.raySegment)(model, p, 0, cmbDepth, topWaveIsS);
+    const turnCore = (0, exports.findTurningDepth)(model, p, coreMaxDepth, false, cmbDepth);
     if (turnCore === null)
         return null;
-    const { T: Tc, X: Xc } = raySegment(model, p, cmbDepth, turnCore, false);
+    const { T: Tc, X: Xc } = (0, exports.raySegment)(model, p, cmbDepth, turnCore, false);
     const T = Tm1 + 2 * Tc + Tm2;
     const X = Xm1 + 2 * Xc + Xm2;
     return {
@@ -359,28 +354,29 @@ function computeCoreRefractedRay(model, sourceDepth, distanceDeg, topWaveIsS, cm
             { depth: 0, distanceDeg: (X * 180) / Math.PI, time: T },
         ]
     };
-}
+};
+exports.computeCoreRefractedRay = computeCoreRefractedRay;
 /** PKiKP — reflected off the inner core boundary. */
-function computePKiKP(model, sourceDepth, distanceDeg, cmbDepth, icbDepth) {
+const computePKiKP = (model, sourceDepth, distanceDeg, cmbDepth, icbDepth) => {
     const targetX = (distanceDeg * Math.PI) / 180;
     const computeX = (p) => {
-        const pCMB = maxRayParam(model, cmbDepth, false);
-        const pICB = maxRayParam(model, icbDepth, false);
+        const pCMB = (0, exports.maxRayParam)(model, cmbDepth, false);
+        const pICB = (0, exports.maxRayParam)(model, icbDepth, false);
         if (p >= pCMB || p >= pICB)
             return null;
-        const { X: Xm1 } = raySegment(model, p, sourceDepth, cmbDepth, false);
-        const { X: Xc } = raySegment(model, p, cmbDepth, icbDepth, false);
-        const { X: Xm2 } = raySegment(model, p, 0, cmbDepth, false);
+        const { X: Xm1 } = (0, exports.raySegment)(model, p, sourceDepth, cmbDepth, false);
+        const { X: Xc } = (0, exports.raySegment)(model, p, cmbDepth, icbDepth, false);
+        const { X: Xm2 } = (0, exports.raySegment)(model, p, 0, cmbDepth, false);
         return Xm1 + 2 * Xc + Xm2;
     };
-    const pMax = maxRayParam(model, cmbDepth, false) * 0.9999;
+    const pMax = (0, exports.maxRayParam)(model, cmbDepth, false) * 0.9999;
     const pMin = 1e-6;
     const p = bisectRayParam(computeX, pMin, pMax, targetX);
     if (p === null)
         return null;
-    const { T: Tm1, X: Xm1 } = raySegment(model, p, sourceDepth, cmbDepth, false);
-    const { T: Tc, X: Xc } = raySegment(model, p, cmbDepth, icbDepth, false);
-    const { T: Tm2, X: Xm2 } = raySegment(model, p, 0, cmbDepth, false);
+    const { T: Tm1, X: Xm1 } = (0, exports.raySegment)(model, p, sourceDepth, cmbDepth, false);
+    const { T: Tc, X: Xc } = (0, exports.raySegment)(model, p, cmbDepth, icbDepth, false);
+    const { T: Tm2, X: Xm2 } = (0, exports.raySegment)(model, p, 0, cmbDepth, false);
     const T = Tm1 + 2 * Tc + Tm2;
     const X = Xm1 + 2 * Xc + Xm2;
     return {
@@ -394,36 +390,37 @@ function computePKiKP(model, sourceDepth, distanceDeg, cmbDepth, icbDepth) {
             { depth: 0, distanceDeg: (X * 180) / Math.PI, time: T },
         ]
     };
-}
+};
+exports.computePKiKP = computePKiKP;
 /** SKS — S in mantle, P in outer core, S back in mantle. */
-function computeSKS(model, sourceDepth, distanceDeg, cmbDepth, icbDepth) {
+const computeSKS = (model, sourceDepth, distanceDeg, cmbDepth, icbDepth) => {
     const targetX = (distanceDeg * Math.PI) / 180;
     const computeX = (p) => {
-        const pCMBs = maxRayParam(model, cmbDepth, true);
-        const pICBp = maxRayParam(model, icbDepth, false);
+        const pCMBs = (0, exports.maxRayParam)(model, cmbDepth, true);
+        const pICBp = (0, exports.maxRayParam)(model, icbDepth, false);
         if (p >= pCMBs || p >= pICBp)
             return null;
-        const { X: Xs1 } = raySegment(model, p, sourceDepth, cmbDepth, true);
-        const { X: Xs2 } = raySegment(model, p, 0, cmbDepth, true);
-        const turnCore = findTurningDepth(model, p, icbDepth, false, cmbDepth);
+        const { X: Xs1 } = (0, exports.raySegment)(model, p, sourceDepth, cmbDepth, true);
+        const { X: Xs2 } = (0, exports.raySegment)(model, p, 0, cmbDepth, true);
+        const turnCore = (0, exports.findTurningDepth)(model, p, icbDepth, false, cmbDepth);
         if (turnCore === null)
             return null;
-        const { X: Xc } = raySegment(model, p, cmbDepth, turnCore, false);
+        const { X: Xc } = (0, exports.raySegment)(model, p, cmbDepth, turnCore, false);
         return Xs1 + 2 * Xc + Xs2;
     };
-    const pMax = Math.min(maxRayParam(model, cmbDepth, true), maxRayParam(model, cmbDepth, false)) * 0.9999;
-    const pMin = maxRayParam(model, icbDepth, false) * 1.0001;
+    const pMax = Math.min((0, exports.maxRayParam)(model, cmbDepth, true), (0, exports.maxRayParam)(model, cmbDepth, false)) * 0.9999;
+    const pMin = (0, exports.maxRayParam)(model, icbDepth, false) * 1.0001;
     if (pMin >= pMax)
         return null;
     const p = bisectRayParam(computeX, pMin, pMax, targetX);
     if (p === null)
         return null;
-    const { T: Ts1, X: Xs1 } = raySegment(model, p, sourceDepth, cmbDepth, true);
-    const { T: Ts2, X: Xs2 } = raySegment(model, p, 0, cmbDepth, true);
-    const turnCore = findTurningDepth(model, p, icbDepth, false, cmbDepth);
+    const { T: Ts1, X: Xs1 } = (0, exports.raySegment)(model, p, sourceDepth, cmbDepth, true);
+    const { T: Ts2, X: Xs2 } = (0, exports.raySegment)(model, p, 0, cmbDepth, true);
+    const turnCore = (0, exports.findTurningDepth)(model, p, icbDepth, false, cmbDepth);
     if (!turnCore)
         return null;
-    const { T: Tc, X: Xc } = raySegment(model, p, cmbDepth, turnCore, false);
+    const { T: Tc, X: Xc } = (0, exports.raySegment)(model, p, cmbDepth, turnCore, false);
     const T = Ts1 + 2 * Tc + Ts2;
     const X = Xs1 + 2 * Xc + Xs2;
     return {
@@ -436,36 +433,37 @@ function computeSKS(model, sourceDepth, distanceDeg, cmbDepth, icbDepth) {
             { depth: 0, distanceDeg: (X * 180) / Math.PI, time: T },
         ]
     };
-}
+};
+exports.computeSKS = computeSKS;
 /** SKKS — S in mantle, two legs in outer core with CMB bounce. */
-function computeSKKS(model, sourceDepth, distanceDeg, cmbDepth, icbDepth) {
+const computeSKKS = (model, sourceDepth, distanceDeg, cmbDepth, icbDepth) => {
     const targetX = (distanceDeg * Math.PI) / 180;
     const computeX = (p) => {
-        const pCMBs = maxRayParam(model, cmbDepth, true);
-        const pICBp = maxRayParam(model, icbDepth, false);
+        const pCMBs = (0, exports.maxRayParam)(model, cmbDepth, true);
+        const pICBp = (0, exports.maxRayParam)(model, icbDepth, false);
         if (p >= pCMBs || p >= pICBp)
             return null;
-        const { X: Xs1 } = raySegment(model, p, sourceDepth, cmbDepth, true);
-        const { X: Xs2 } = raySegment(model, p, 0, cmbDepth, true);
-        const turnCore = findTurningDepth(model, p, icbDepth, false, cmbDepth);
+        const { X: Xs1 } = (0, exports.raySegment)(model, p, sourceDepth, cmbDepth, true);
+        const { X: Xs2 } = (0, exports.raySegment)(model, p, 0, cmbDepth, true);
+        const turnCore = (0, exports.findTurningDepth)(model, p, icbDepth, false, cmbDepth);
         if (turnCore === null)
             return null;
-        const { X: Xc } = raySegment(model, p, cmbDepth, turnCore, false);
+        const { X: Xc } = (0, exports.raySegment)(model, p, cmbDepth, turnCore, false);
         return Xs1 + 4 * Xc + Xs2;
     };
-    const pMax = Math.min(maxRayParam(model, cmbDepth, true), maxRayParam(model, cmbDepth, false)) * 0.9999;
-    const pMin = maxRayParam(model, icbDepth, false) * 1.0001;
+    const pMax = Math.min((0, exports.maxRayParam)(model, cmbDepth, true), (0, exports.maxRayParam)(model, cmbDepth, false)) * 0.9999;
+    const pMin = (0, exports.maxRayParam)(model, icbDepth, false) * 1.0001;
     if (pMin >= pMax)
         return null;
     const p = bisectRayParam(computeX, pMin, pMax, targetX);
     if (p === null)
         return null;
-    const { T: Ts1, X: Xs1 } = raySegment(model, p, sourceDepth, cmbDepth, true);
-    const { T: Ts2, X: Xs2 } = raySegment(model, p, 0, cmbDepth, true);
-    const turnCore = findTurningDepth(model, p, icbDepth, false, cmbDepth);
+    const { T: Ts1, X: Xs1 } = (0, exports.raySegment)(model, p, sourceDepth, cmbDepth, true);
+    const { T: Ts2, X: Xs2 } = (0, exports.raySegment)(model, p, 0, cmbDepth, true);
+    const turnCore = (0, exports.findTurningDepth)(model, p, icbDepth, false, cmbDepth);
     if (!turnCore)
         return null;
-    const { T: Tc, X: Xc } = raySegment(model, p, cmbDepth, turnCore, false);
+    const { T: Tc, X: Xc } = (0, exports.raySegment)(model, p, cmbDepth, turnCore, false);
     const T = Ts1 + 4 * Tc + Ts2;
     const X = Xs1 + 4 * Xc + Xs2;
     return {
@@ -478,33 +476,34 @@ function computeSKKS(model, sourceDepth, distanceDeg, cmbDepth, icbDepth) {
             { depth: 0, distanceDeg: (X * 180) / Math.PI, time: T },
         ]
     };
-}
+};
+exports.computeSKKS = computeSKKS;
 /** pP / sS — depth phase: upgoing from source, surface reflection, then direct. */
-function computeDepthPhase(model, sourceDepth, distanceDeg, isS, maxSearchDepth) {
+const computeDepthPhase = (model, sourceDepth, distanceDeg, isS, maxSearchDepth) => {
     if (sourceDepth <= 0)
         return null;
     const targetX = (distanceDeg * Math.PI) / 180;
     const computeX = (p) => {
         // Upgoing from source to surface
-        const { X: Xup } = raySegment(model, p, 0, sourceDepth, isS);
+        const { X: Xup } = (0, exports.raySegment)(model, p, 0, sourceDepth, isS);
         // Direct P/S leg: surface source to receiver
         const d = directRayDistance(model, p, 0, maxSearchDepth, isS);
         if (d === null)
             return null;
         return Xup + d;
     };
-    const pMin = maxRayParam(model, maxSearchDepth, isS) * 1.0001;
-    const pMax = maxRayParam(model, sourceDepth, isS) * 0.9999;
+    const pMin = (0, exports.maxRayParam)(model, maxSearchDepth, isS) * 1.0001;
+    const pMax = (0, exports.maxRayParam)(model, sourceDepth, isS) * 0.9999;
     if (pMin >= pMax)
         return null;
     const p = bisectRayParam(computeX, pMin, pMax, targetX);
     if (p === null)
         return null;
-    const { T: Tup, X: Xup } = raySegment(model, p, 0, sourceDepth, isS);
-    const turn = findTurningDepth(model, p, maxSearchDepth, isS, 0);
+    const { T: Tup, X: Xup } = (0, exports.raySegment)(model, p, 0, sourceDepth, isS);
+    const turn = (0, exports.findTurningDepth)(model, p, maxSearchDepth, isS, 0);
     if (!turn)
         return null;
-    const { T: Td, X: Xd } = raySegment(model, p, 0, turn, isS);
+    const { T: Td, X: Xd } = (0, exports.raySegment)(model, p, 0, turn, isS);
     const T = Tup + 2 * Td;
     const X = Xup + 2 * Xd;
     return {
@@ -518,17 +517,18 @@ function computeDepthPhase(model, sourceDepth, distanceDeg, isS, maxSearchDepth)
             { depth: 0, distanceDeg: (X * 180) / Math.PI, time: T },
         ]
     };
-}
+};
+exports.computeDepthPhase = computeDepthPhase;
 /** Pdiff / Sdiff — diffracted along the CMB. Valid for distances > ~97°. */
-function computeDiffractedRay(model, sourceDepth, distanceDeg, isS, cmbDepth) {
+const computeDiffractedRay = (model, sourceDepth, distanceDeg, isS, cmbDepth) => {
     if (distanceDeg < 97 || distanceDeg > 170)
         return null;
     const targetX = (distanceDeg * Math.PI) / 180;
     const R = model.earthRadius;
     // Ray parameter for ray traveling along CMB
-    const p = maxRayParam(model, cmbDepth, isS);
-    const { T: T1, X: X1 } = raySegment(model, p, sourceDepth, cmbDepth, isS);
-    const { T: T2, X: X2 } = raySegment(model, p, 0, cmbDepth, isS);
+    const p = (0, exports.maxRayParam)(model, cmbDepth, isS);
+    const { T: T1, X: X1 } = (0, exports.raySegment)(model, p, sourceDepth, cmbDepth, isS);
+    const { T: T2, X: X2 } = (0, exports.raySegment)(model, p, 0, cmbDepth, isS);
     const diffX = targetX - X1 - X2;
     if (diffX < 0)
         return null;
@@ -548,5 +548,6 @@ function computeDiffractedRay(model, sourceDepth, distanceDeg, isS, cmbDepth) {
             { depth: 0, distanceDeg, time: T },
         ]
     };
-}
+};
+exports.computeDiffractedRay = computeDiffractedRay;
 //# sourceMappingURL=RayCalculator.js.map

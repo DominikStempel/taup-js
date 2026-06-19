@@ -16,13 +16,13 @@ export interface RayResult {
  * The ray goes from d1 toward higher depth (downward) until turning,
  * but this function simply integrates the given depth interval.
  */
-export function raySegment(
+export const raySegment = (
   model: VelocityModel,
   p: number,
   fromDepth: number,
   toDepth: number,
   isS: boolean
-): { T: number; X: number } {
+): { T: number; X: number } => {
   let T = 0;
   let X = 0;
   const d1 = Math.min(fromDepth, toDepth);
@@ -51,13 +51,13 @@ export function raySegment(
  * The turning depth is where 1/v_flat(z) = p (flat-Earth transform).
  * v_flat(d) = v(d) * R / r(d)
  */
-export function findTurningDepth(
+export const findTurningDepth = (
   model: VelocityModel,
   p: number,
   maxDepth: number,
   isS: boolean,
   minDepth: number = 0
-): number | null {
+): number | null => {
   const R = model.earthRadius;
 
   for (const layer of model.layers) {
@@ -89,7 +89,7 @@ export function findTurningDepth(
  * The ray parameter corresponding to a ray that turns exactly at `depth`.
  * p = r / (v_flat * R) = 1 / v_flat(depth)
  */
-export function maxRayParam(model: VelocityModel, depth: number, isS: boolean): number {
+export const maxRayParam = (model: VelocityModel, depth: number, isS: boolean): number => {
   const R = model.earthRadius;
   const r = depthToRadius(depth, R);
   const v = model.velocityAt(depth, isS);
@@ -103,13 +103,13 @@ export function maxRayParam(model: VelocityModel, depth: number, isS: boolean): 
  *  - turns somewhere in [sourceDepth, maxSearchDepth]
  *  - comes back up to surface (depth = 0)
  */
-function directRayDistance(
+const directRayDistance = (
   model: VelocityModel,
   p: number,
   sourceDepth: number,
   maxSearchDepth: number,
   isS: boolean
-): number | null {
+): number | null => {
   const turnDepth = findTurningDepth(model, p, maxSearchDepth, isS, sourceDepth);
   if (turnDepth === null) return null;
 
@@ -129,12 +129,12 @@ function directRayDistance(
  * on the first branch) — i.e., the earliest crossing when iterating from the
  * smallest-p end.
  */
-function bisectRayParam(
+const bisectRayParam = (
   computeX: (p: number) => number | null,
   pMin: number,
   pMax: number,
   targetX: number
-): number | null {
+): number | null => {
   // --- Phase 1: grid search ---
   const N = 300;
   const valid: Array<{ p: number; x: number }> = [];
@@ -185,7 +185,7 @@ function bisectRayParam(
   return (loP + hiP) / 2;
 }
 
-function toAngle(p: number, depth: number, model: VelocityModel, isS: boolean): number {
+const toAngle = (p: number, depth: number, model: VelocityModel, isS: boolean): number => {
   const R = model.earthRadius;
   const r = depthToRadius(depth, R);
   const v = model.velocityAt(depth, isS);
@@ -195,13 +195,13 @@ function toAngle(p: number, depth: number, model: VelocityModel, isS: boolean): 
 }
 
 /** Direct P or S wave turning in the mantle (or specified depth range). */
-export function computeDirectRay(
+export const computeDirectRay = (
   model: VelocityModel,
   sourceDepth: number,
   distanceDeg: number,
   isS: boolean,
   maxSearchDepth: number
-): RayResult | null {
+): RayResult | null => {
   const targetX = (distanceDeg * Math.PI) / 180;
   // p range: rays that turn from just above maxSearchDepth up to just below source
   const pMin = maxRayParam(model, maxSearchDepth, isS) * 1.0001;
@@ -240,13 +240,13 @@ export function computeDirectRay(
 }
 
 /** PcP, ScS — wave reflected off a depth boundary without penetrating it. */
-export function computeReflectedRay(
+export const computeReflectedRay = (
   model: VelocityModel,
   sourceDepth: number,
   distanceDeg: number,
   isS: boolean,
   reflectorDepth: number
-): RayResult | null {
+): RayResult | null => {
   const targetX = (distanceDeg * Math.PI) / 180;
   const R = model.earthRadius;
 
@@ -291,13 +291,13 @@ export function computeReflectedRay(
  * PP or SS — one surface bounce. Ray goes source→turn1→surface→turn2→receiver.
  * Both legs have the same ray parameter.
  */
-export function computeSurfaceBounceRay(
+export const computeSurfaceBounceRay = (
   model: VelocityModel,
   sourceDepth: number,
   distanceDeg: number,
   isS: boolean,
   maxSearchDepth: number
-): RayResult | null {
+): RayResult | null => {
   const targetX = (distanceDeg * Math.PI) / 180;
 
   const computeX = (p: number): number | null => {
@@ -351,7 +351,7 @@ export function computeSurfaceBounceRay(
  * PKP / PKIKP — refracted through the outer core (and optionally inner core).
  * Mantle legs use P velocity; core leg uses P velocity in fluid outer core.
  */
-export function computeCoreRefractedRay(
+export const computeCoreRefractedRay = (
   model: VelocityModel,
   sourceDepth: number,
   distanceDeg: number,
@@ -359,7 +359,7 @@ export function computeCoreRefractedRay(
   cmbDepth: number,
   icbDepth: number,
   passesInnerCore: boolean
-): RayResult | null {
+): RayResult | null => {
   const targetX = (distanceDeg * Math.PI) / 180;
 
   const coreMaxDepth = passesInnerCore ? model.maxDepth : icbDepth;
@@ -418,13 +418,13 @@ export function computeCoreRefractedRay(
 }
 
 /** PKiKP — reflected off the inner core boundary. */
-export function computePKiKP(
+export const computePKiKP = (
   model: VelocityModel,
   sourceDepth: number,
   distanceDeg: number,
   cmbDepth: number,
   icbDepth: number
-): RayResult | null {
+): RayResult | null => {
   const targetX = (distanceDeg * Math.PI) / 180;
 
   const computeX = (p: number): number | null => {
@@ -464,13 +464,13 @@ export function computePKiKP(
 }
 
 /** SKS — S in mantle, P in outer core, S back in mantle. */
-export function computeSKS(
+export const computeSKS = (
   model: VelocityModel,
   sourceDepth: number,
   distanceDeg: number,
   cmbDepth: number,
   icbDepth: number
-): RayResult | null {
+): RayResult | null => {
   const targetX = (distanceDeg * Math.PI) / 180;
 
   const computeX = (p: number): number | null => {
@@ -517,13 +517,13 @@ export function computeSKS(
 }
 
 /** SKKS — S in mantle, two legs in outer core with CMB bounce. */
-export function computeSKKS(
+export const computeSKKS = (
   model: VelocityModel,
   sourceDepth: number,
   distanceDeg: number,
   cmbDepth: number,
   icbDepth: number
-): RayResult | null {
+): RayResult | null => {
   const targetX = (distanceDeg * Math.PI) / 180;
 
   const computeX = (p: number): number | null => {
@@ -570,13 +570,13 @@ export function computeSKKS(
 }
 
 /** pP / sS — depth phase: upgoing from source, surface reflection, then direct. */
-export function computeDepthPhase(
+export const computeDepthPhase = (
   model: VelocityModel,
   sourceDepth: number,
   distanceDeg: number,
   isS: boolean,
   maxSearchDepth: number
-): RayResult | null {
+): RayResult | null => {
   if (sourceDepth <= 0) return null;
   const targetX = (distanceDeg * Math.PI) / 180;
 
@@ -617,13 +617,13 @@ export function computeDepthPhase(
 }
 
 /** Pdiff / Sdiff — diffracted along the CMB. Valid for distances > ~97°. */
-export function computeDiffractedRay(
+export const computeDiffractedRay = (
   model: VelocityModel,
   sourceDepth: number,
   distanceDeg: number,
   isS: boolean,
   cmbDepth: number
-): RayResult | null {
+): RayResult | null => {
   if (distanceDeg < 97 || distanceDeg > 170) return null;
   const targetX = (distanceDeg * Math.PI) / 180;
   const R = model.earthRadius;

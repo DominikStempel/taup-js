@@ -15,11 +15,11 @@
  * Epicentral angle (radians) = x_flat / R
  */
 export declare const EARTH_RADIUS = 6371;
-export declare function depthToRadius(depth: number, earthRadius?: number): number;
-export declare function flattenVelocity(v: number, depth: number, earthRadius?: number): number;
-export declare function flattenDepth(depth: number, earthRadius?: number): number;
+export declare const depthToRadius: (depth: number, earthRadius?: number) => number;
+export declare const flattenVelocity: (v: number, depth: number, earthRadius?: number) => number;
+export declare const flattenDepth: (depth: number, earthRadius?: number) => number;
 /** Vertical flat-Earth slowness. Returns 0 when p >= u (turning ray). */
-export declare function eta(u: number, p: number): number;
+export declare const eta: (u: number, p: number) => number;
 /**
  * Integrate travel time (seconds) and epicentral angle (radians) through one
  * velocity layer using the flat-Earth transform.
@@ -33,7 +33,7 @@ export declare function eta(u: number, p: number): number;
  *
  * Both vanish at u = p, so the singular point is handled naturally.
  */
-export declare function integrateLayer(p: number, topDepth: number, botDepth: number, topV: number, botV: number, earthRadius?: number): {
+export declare const integrateLayer: (p: number, topDepth: number, botDepth: number, topV: number, botV: number, earthRadius?: number) => {
     dT: number;
     dX: number;
 };

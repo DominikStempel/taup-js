@@ -1,13 +1,12 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.parsePhase = parsePhase;
-exports.supportedPhases = supportedPhases;
+exports.supportedPhases = exports.parsePhase = void 0;
 /**
  * Simplified phase name parser. Supports the most common seismic phases:
  * P, S, PP, SS, PcP, ScS, PKP, PKiKP, PKIKP, pP, sP, pS, sS,
  * Pdiff, Sdiff, SKS, SKKS, ScP, PCS
  */
-function parsePhase(phaseName) {
+const parsePhase = (phaseName) => {
     const name = phaseName.trim();
     // Depth phases (lowercase prefix)
     const isDepthPhase = /^[ps][PSK]/.test(name);
@@ -173,8 +172,10 @@ function parsePhase(phaseName) {
         },
     };
     return phaseMap[name] ?? null;
-}
-function supportedPhases() {
+};
+exports.parsePhase = parsePhase;
+const supportedPhases = () => {
     return ["P", "S", "PP", "SS", "PcP", "ScS", "ScP", "PKP", "PKiKP", "PKIKP", "SKS", "SKKS", "pP", "sS", "Pdiff", "Sdiff"];
-}
+};
+exports.supportedPhases = supportedPhases;
 //# sourceMappingURL=PhaseParser.js.map

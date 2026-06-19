@@ -16,29 +16,28 @@
  * Epicentral angle (radians) = x_flat / R
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.EARTH_RADIUS = void 0;
-exports.depthToRadius = depthToRadius;
-exports.flattenVelocity = flattenVelocity;
-exports.flattenDepth = flattenDepth;
-exports.eta = eta;
-exports.integrateLayer = integrateLayer;
+exports.integrateLayer = exports.eta = exports.flattenDepth = exports.flattenVelocity = exports.depthToRadius = exports.EARTH_RADIUS = void 0;
 exports.EARTH_RADIUS = 6371.0;
-function depthToRadius(depth, earthRadius = exports.EARTH_RADIUS) {
+const depthToRadius = (depth, earthRadius = exports.EARTH_RADIUS) => {
     return earthRadius - depth;
-}
-function flattenVelocity(v, depth, earthRadius = exports.EARTH_RADIUS) {
-    const r = depthToRadius(depth, earthRadius);
+};
+exports.depthToRadius = depthToRadius;
+const flattenVelocity = (v, depth, earthRadius = exports.EARTH_RADIUS) => {
+    const r = (0, exports.depthToRadius)(depth, earthRadius);
     return v * (earthRadius / r);
-}
-function flattenDepth(depth, earthRadius = exports.EARTH_RADIUS) {
-    const r = depthToRadius(depth, earthRadius);
+};
+exports.flattenVelocity = flattenVelocity;
+const flattenDepth = (depth, earthRadius = exports.EARTH_RADIUS) => {
+    const r = (0, exports.depthToRadius)(depth, earthRadius);
     return earthRadius * Math.log(earthRadius / r);
-}
+};
+exports.flattenDepth = flattenDepth;
 /** Vertical flat-Earth slowness. Returns 0 when p >= u (turning ray). */
-function eta(u, p) {
+const eta = (u, p) => {
     const v = u * u - p * p;
     return v > 0 ? Math.sqrt(v) : 0;
-}
+};
+exports.eta = eta;
 /**
  * Integrate travel time (seconds) and epicentral angle (radians) through one
  * velocity layer using the flat-Earth transform.
@@ -52,12 +51,12 @@ function eta(u, p) {
  *
  * Both vanish at u = p, so the singular point is handled naturally.
  */
-function integrateLayer(p, topDepth, botDepth, topV, botV, earthRadius = exports.EARTH_RADIUS) {
+const integrateLayer = (p, topDepth, botDepth, topV, botV, earthRadius = exports.EARTH_RADIUS) => {
     if (botDepth - topDepth < 1e-9)
         return { dT: 0, dX: 0 };
     const R = earthRadius;
-    const r1 = depthToRadius(topDepth, R);
-    const r2 = depthToRadius(botDepth, R);
+    const r1 = (0, exports.depthToRadius)(topDepth, R);
+    const r2 = (0, exports.depthToRadius)(botDepth, R);
     const v1f = topV * (R / r1);
     const v2f = botV * (R / r2);
     const z1 = R * Math.log(R / r1);
@@ -96,5 +95,6 @@ function integrateLayer(p, topDepth, botDepth, topV, botV, earthRadius = exports
     const dT = (F_T(u1) - F_T(u_bot)) / b_abs;
     const dX = p * (F_X(u1) - F_X(u_bot)) / b_abs / R;
     return { dT, dX };
-}
+};
+exports.integrateLayer = integrateLayer;
 //# sourceMappingURL=integration.js.map
